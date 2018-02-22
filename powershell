@@ -1,0 +1,43 @@
+
+
+
+$ADuser = Get-ADUser $env:USERNAME -Properties * | Select-Object Canonicalname
+
+$UserOU = $ADuser.CanonicalName.ToString().Split('/')[1]
+$OU = $UserOU.Insert(0,"OU=")
+
+# Pull three digit opco and format to OU=xxx-Computers,OU=xxx-Idaho,DC=na,DC=sysco,DC=net
+
+$Computer = $UserOU.Substring(0,3) + "-Computers"
+$OUcom = $Computer.Insert(0,"OU=")
+
+
+ $Base = "$OUcom,$OU,DC=na,DC=sysco,DC=net"
+  
+
+ #----------------------------------------------------------------
+ #variabel for file path for auto save location
+$Path = "c:\users\$env:USERNAME\desktop\list.csv"
+
+ Get-ADComputer -Filter * -Property * -SearchBase $Base | Format-Table Name,OperatingSystem,OperatingSystemVersion -Wrap –Auto
+#pull computernames and os information into list
+ Get-ADComputer -Filter * -Property * -SearchBase $Base | Select-Object name,OperatingSystem | Export-Csv -NoTypeInformation -Path c:\users\mgon5631\desktop\list.csv
+
+ #----------------------------------------------------------------------------- take escel sheet and create formulas and counts to genereate pertenacges of os counts win 7/8/10
+
+ 
+#get cound from file to make average on cells
+$LineCount = (Import-Csv c:\users\mgon5631\desktop\list.csv).count
+$ComCount = Import-Csv c:\users\mgon5631\desktop\list.csv | Measure-Object -Property name -Line
+
+
+
+
+ $excel.visible = $true
+$excel.displayalerts = $false
+
+$excel = New-Object -ComObject Excel.application
+$workbook = $excel.Workbooks.Open("c:\users\mgon5631\desktop\list.csv")
+$worksheet = $workbook.worksheets.item(1)
+
+$rows = $worksheet.range("A2").currentregion.item(1)
