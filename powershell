@@ -1,6 +1,7 @@
 
 
 
+
 $ADuser = Get-ADUser $env:USERNAME -Properties * | Select-Object Canonicalname
 
 $UserOU = $ADuser.CanonicalName.ToString().Split('/')[1]
@@ -33,11 +34,33 @@ $ComCount = Import-Csv c:\users\mgon5631\desktop\list.csv | Measure-Object -Prop
 
 
 
- $excel.visible = $true
+$excel.visible = $true
 $excel.displayalerts = $false
 
 $excel = New-Object -ComObject Excel.application
-$workbook = $excel.Workbooks.Open("c:\users\mgon5631\desktop\list.csv")
-$worksheet = $workbook.worksheets.item(1)
+#$workbook = $excel.Workbooks.Open("c:\users\mgon5631\desktop\list.csv")
+$workbook = $excel.Workbooks.add()
+$OSinfo = $workbook.worksheets.item(1)
+$OSinfo.name = 'VerisonTable'
+$OSinfo.cells.item(1,1) = 'Name'
+$OSinfo.cells.item(1,2) = 'Operating System'
 
-$rows = $worksheet.range("A2").currentregion.item(1)
+#wiriting data to be put on the report
+$row = 2
+$column = 1
+Get-ADComputer -Filter * -Property * -SearchBase $Base | Select-Object | ForEach-Object {
+#Name    
+$OSinfo.Cells.Item($row,$column) =  $_.Name
+    $column++
+#Operating System
+$OSinfo.cells.Item($row,$column) =  $_.OperatingSystem
+$column++
+#Increment to next Row and reset Column
+$row++
+$column = 1
+}
+
+$OSinfo.Selection.AutoFilter(1,$null)
+
+$usedrange = $OSinfo.UsedRange
+$usedrange.EntireColumn.AutoFit() | Out-Null
